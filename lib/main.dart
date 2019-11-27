@@ -1,6 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'show_code.dart';
+import 'dart:convert';
+
+class PictureInfo {
+  final String date;
+  final String title;
+  final String url;
+  final String description;
+
+  PictureInfo({this.date, this.title, this.url, this.description});
+
+  factory PictureInfo.fromJson(Map<String, dynamic> json) {
+    return PictureInfo(
+      date: json['date'],
+      title: json['title'],
+      url: json['url'],
+      description: json['explanation'],
+    );
+  }
+}
 
 class TestHttp extends StatefulWidget {
   final String url;
@@ -12,8 +31,8 @@ class TestHttp extends StatefulWidget {
 } // TestHttp
 
 class TestHttpState extends State<TestHttp> {
-  String _url, _body;
-  int _status;
+  String _url;
+  PictureInfo _pictureInfo;
 
   @override
   void initState() {
@@ -24,13 +43,16 @@ class TestHttpState extends State<TestHttp> {
   _sendRequestGet() {
     //update form data
     http.get(_url).then((response) {
-      _status = response.statusCode;
-      _body = response.body;
+      _pictureInfo = PictureInfo.fromJson(json.decode(response.body));
 
       setState(() {}); //reBuildWidget
     }).catchError((error) {
-      _status = 0;
-      _body = error.toString();
+      _pictureInfo = PictureInfo(
+        date: '',
+        title: error.toString(),
+        url: '',
+        description: '',
+      );
 
       setState(() {}); //reBuildWidget
     });
@@ -41,17 +63,19 @@ class TestHttpState extends State<TestHttp> {
         child: SingleChildScrollView(
             child: Column(
       children: <Widget>[
-        SizedBox(height: 20.0),
+        SizedBox(height: 20),
         RaisedButton(
             child: Text('See picture of the day'), onPressed: _sendRequestGet),
-        SizedBox(height: 20.0),
-        Text('Response status',
-            style: TextStyle(fontSize: 20.0, color: Colors.blue)),
-        Text(_status == null ? '' : _status.toString()),
-        SizedBox(height: 20.0),
-        Text('Response body',
-            style: TextStyle(fontSize: 20.0, color: Colors.blue)),
-        Text(_body == null ? '' : _body),
+        SizedBox(height: 20),
+        Text(_pictureInfo == null ? '' : _pictureInfo.date,
+            style: TextStyle(fontSize: 15, color: Colors.green)),
+        SizedBox(height: 10),
+        Text(_pictureInfo == null ? '' : _pictureInfo.title,
+            style: TextStyle(fontSize: 20, color: Colors.blue)),
+        SizedBox(height: 10),
+        Image.network(_pictureInfo == null ? '' : _pictureInfo.url),
+        SizedBox(height: 10),
+        Text(_pictureInfo == null ? '' : _pictureInfo.description),
       ],
     )));
   } //build
